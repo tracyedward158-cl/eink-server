@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#1a1714">
 <link rel="manifest" href="/manifest.json">
 <title>墨水屏 × Claude</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -463,9 +463,9 @@ function renderText(text){
   x.textAlign="center";
   x.fillText(dateStr,w/2,bottomY);
 
-  // From Claude - right aligned
+  // From Claude - right aligned, script font
   x.textAlign="right";
-  x.font="italic 11px 'Noto Serif SC','PingFang SC',serif";
+  x.font="500 17px 'Dancing Script',cursive";
   x.fillText("From Claude",w-m-6,bottomY);
 
   // Reset textAlign

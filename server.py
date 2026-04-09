@@ -1,15 +1,15 @@
 """
-墨水屏 × Claude — 中转服务器 v2
-支持 SSE 实时推送，不再需要轮询。
+墨水屏 × Claude — 中转服务器 v3
+支持 MCP（自定义连接器），Claude 对话框直接推送到墨水屏。
 """
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
-import json, os, datetime, secrets, asyncio
+import json, os, datetime, secrets, asyncio, uuid
 
 app = FastAPI(title="E-Ink × Claude Bridge")
 
@@ -162,6 +162,180 @@ def manifest():
         "theme_color": "#1a1714",
         "icons": [],
     }
+
+
+# ── MCP Protocol (Custom Connector for Claude) ──
+MCP_TOOLS = [
+    {
+        "name": "push_to_eink",
+        "description": "推送文字内容到用户的电子墨水屏。墨水屏分辨率400x300，只能显示纯黑白。内容控制在100字以内。Push text content to the user's e-ink display. Keep content under 100 characters. Black and white only, no emoji or special symbols.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "description": "要显示在墨水屏上的文字内容。The text to display on the e-ink screen."
+                }
+            },
+            "required": ["text"]
+        }
+    },
+    {
+        "name": "get_eink_status",
+        "description": "查看墨水屏当前显示的内容和最近推送历史。Check what's currently displayed on the e-ink screen and recent push history.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    }
+]
+
+
+def handle_mcp_request(body: dict) -> dict:
+    """Handle a single MCP JSON-RPC request."""
+    method = body.get("method", "")
+    req_id = body.get("id")
+    params = body.get("params", {})
+
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {"tools": {}},
+                "serverInfo": {
+                    "name": "eink-display",
+                    "version": "1.0.0"
+                }
+            }
+        }
+
+    elif method == "notifications/initialized":
+        # This is a notification, no response needed
+        return None
+
+    elif method == "tools/list":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {"tools": MCP_TOOLS}
+        }
+
+    elif method == "tools/call":
+        tool_name = params.get("name", "")
+        args = params.get("arguments", {})
+
+        if tool_name == "push_to_eink":
+            text = args.get("text", "")
+            if not text:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": {
+                        "content": [{"type": "text", "text": "错误：文字内容不能为空"}],
+                        "isError": True
+                    }
+                }
+
+            # Push the content (same logic as /api/letter but without token check)
+            data = {
+                "text": text,
+                "date": datetime.date.today().isoformat(),
+                "updated_at": datetime.datetime.now().isoformat(),
+            }
+            open(DATA_FILE, "w").write(json.dumps(data, ensure_ascii=False))
+            append_history(data)
+
+            # Notify SSE subscribers
+            msg = json.dumps(data, ensure_ascii=False)
+            for q in subscribers:
+                q.put_nowait(msg)
+
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "content": [{"type": "text", "text": f"已发送 ✦ 内容：「{text[:50]}{'...' if len(text)>50 else ''}」约10秒后墨水屏刷新完成。"}]
+                }
+            }
+
+        elif tool_name == "get_eink_status":
+            current = {"text": "", "date": "", "updated_at": ""}
+            if os.path.exists(DATA_FILE):
+                current = json.loads(open(DATA_FILE).read())
+            history_items = load_history()[-5:]
+            status = f"当前显示: {current.get('text','(空)')}\n上次更新: {current.get('updated_at','无')}\n\n最近推送:\n"
+            for h in reversed(history_items):
+                status += f"  [{h.get('date','')}] {h.get('text','')[:40]}\n"
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "content": [{"type": "text", "text": status}]
+                }
+            }
+
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "content": [{"type": "text", "text": f"未知工具: {tool_name}"}],
+                    "isError": True
+                }
+            }
+
+    elif method == "ping":
+        return {"jsonrpc": "2.0", "id": req_id, "result": {}}
+
+    else:
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "error": {"code": -32601, "message": f"Method not found: {method}"}
+        }
+
+
+@app.post("/mcp")
+async def mcp_endpoint(request: Request):
+    """MCP Streamable HTTP endpoint for Claude custom connector."""
+    body = await request.json()
+
+    # Handle batch requests
+    if isinstance(body, list):
+        results = []
+        for item in body:
+            r = handle_mcp_request(item)
+            if r is not None:
+                results.append(r)
+        if len(results) == 1:
+            return JSONResponse(results[0])
+        return JSONResponse(results)
+
+    # Single request
+    result = handle_mcp_request(body)
+    if result is None:
+        return JSONResponse({"jsonrpc": "2.0", "result": {}})
+    return JSONResponse(result)
+
+
+@app.get("/mcp")
+async def mcp_sse(request: Request):
+    """MCP SSE endpoint for server-initiated messages."""
+    async def event_gen():
+        yield f": MCP SSE stream\n\n"
+        while True:
+            if await request.is_disconnected():
+                break
+            await asyncio.sleep(30)
+            yield f": keepalive\n\n"
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

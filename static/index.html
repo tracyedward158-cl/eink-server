@@ -419,31 +419,57 @@ function renderText(text){
   const c=$("cvs");c.width=w;c.height=h;
   const x=c.getContext("2d");
   x.fillStyle="#fff";x.fillRect(0,0,w,h);
+
+  // ── Corner frames ──
+  const m=12, cl=28, cw=2;  // margin, corner length, line width
+  x.strokeStyle="#000";x.lineWidth=cw;
+  // top-left
+  x.beginPath();x.moveTo(m,m+cl);x.lineTo(m,m);x.lineTo(m+cl,m);x.stroke();
+  // top-right
+  x.beginPath();x.moveTo(w-m-cl,m);x.lineTo(w-m,m);x.lineTo(w-m,m+cl);x.stroke();
+  // bottom-left
+  x.beginPath();x.moveTo(m,h-m-cl);x.lineTo(m,h-m);x.lineTo(m+cl,h-m);x.stroke();
+  // bottom-right
+  x.beginPath();x.moveTo(w-m-cl,h-m);x.lineTo(w-m,h-m);x.lineTo(w-m,h-m-cl);x.stroke();
+
   if(!text)return;
   $("empty").style.display="none";
 
+  // ── Text body ──
   x.fillStyle="#000";
   x.font=fs+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
   x.textBaseline="top";
 
-  const p=16,lh=fs*1.55,mw=w-p*2;let y=p;
+  const p=24,lh=fs*1.55,mw=w-p*2;
+  const bottomZone=36; // reserved for date + signature
+  let y=p;
   for(const ln of text.split("\n")){
     if(!ln.trim()){y+=lh*.5;continue}
     let cur="";
     for(const ch of ln){
-      if(x.measureText(cur+ch).width>mw&&cur){x.fillText(cur,p,y);cur=ch;y+=lh;if(y>h-p-24)break}
+      if(x.measureText(cur+ch).width>mw&&cur){x.fillText(cur,p,y);cur=ch;y+=lh;if(y>h-p-bottomZone)break}
       else cur+=ch;
     }
-    if(y<=h-p-24){x.fillText(cur,p,y);y+=lh}
-    if(y>h-p-24)break;
+    if(y<=h-p-bottomZone){x.fillText(cur,p,y);y+=lh}
+    if(y>h-p-bottomZone)break;
   }
 
-  // Bottom line + marks
-  x.strokeStyle="#c0392b";x.lineWidth=.6;
-  x.beginPath();x.moveTo(p,h-26);x.lineTo(w-p,h-26);x.stroke();
-  x.fillStyle="#c0392b";x.font="bold 10px sans-serif";x.fillText("✦ Claude",w-72,h-16);
-  x.fillStyle="#aaa";x.font="10px sans-serif";
-  x.fillText(new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric"}),p,h-16);
+  // ── Bottom: date centered, "From Claude" right ──
+  const dateStr=new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric"});
+  const bottomY=h-m-14;
+
+  // Date - centered
+  x.fillStyle="#000";x.font="12px 'Noto Serif SC','PingFang SC',serif";
+  x.textAlign="center";
+  x.fillText(dateStr,w/2,bottomY);
+
+  // From Claude - right aligned
+  x.textAlign="right";
+  x.font="italic 11px 'Noto Serif SC','PingFang SC',serif";
+  x.fillText("From Claude",w-m-6,bottomY);
+
+  // Reset textAlign
+  x.textAlign="left";
 }
 
 function canvasToBW(){
@@ -461,11 +487,11 @@ function canvasToRed(){
   const c=$("cvs"),w=c.width,h=c.height;
   const d=c.getContext("2d").getImageData(0,0,w,h).data;
   const rb=Math.ceil(w/8),rd=new Uint8Array(rb*h);
-  rd.fill(0xFF); // default all non-red
+  rd.fill(0xFF);
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
     const i=(y*w+x)*4;
     const r=d[i],g=d[i+1],b=d[i+2];
-    if(r>150&&r>g*1.5&&r>b*1.5) rd[y*rb+(x>>3)]&=~(0x80>>(x&7)); // red pixel
+    if(r>150&&r>g*1.5&&r>b*1.5) rd[y*rb+(x>>3)]&=~(0x80>>(x&7));
   }
   return rd;
 }
@@ -480,16 +506,13 @@ function handleImage(input){
   const w=+$("dW").value||400,h=+$("dH").value||300;
   const img=new Image();
   img.onload=()=>{
-    // Floyd-Steinberg dithering
     const tc=document.createElement("canvas");tc.width=w;tc.height=h;
     const tx=tc.getContext("2d");
-    // Scale image to fit
     const scale=Math.min(w/img.width,h/img.height);
     const sw=img.width*scale,sh=img.height*scale;
     tx.fillStyle="#fff";tx.fillRect(0,0,w,h);
     tx.drawImage(img,(w-sw)/2,(h-sh)/2,sw,sh);
 
-    // Dither
     const id=tx.getImageData(0,0,w,h),px=id.data;
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       const i=(y*w+x)*4;
@@ -506,7 +529,6 @@ function handleImage(input){
     }
     tx.putImageData(id,0,0);
 
-    // Show preview
     const dc=$("cvs");dc.width=w;dc.height=h;
     dc.getContext("2d").drawImage(tc,0,0);
     $("empty").style.display="none";
@@ -518,7 +540,6 @@ function handleImage(input){
   img.src=URL.createObjectURL(file);
 }
 
-// Drag & drop
 const dz=$("dropZone");
 dz.addEventListener("dragover",e=>{e.preventDefault();dz.style.borderColor="var(--blue)"});
 dz.addEventListener("dragleave",()=>dz.style.borderColor="#d5d0c8");
@@ -538,7 +559,6 @@ async function sendBW(bw,red){
 
     const cs=mtu-2, total=bw.length+(red?red.length:0);let sent=0;
 
-    // BW layer
     for(let i=0;i<bw.length;i+=cs){
       const chunk=bw.slice(i,i+cs);
       const pkt=new Uint8Array(2+chunk.length);
@@ -548,7 +568,6 @@ async function sendBW(bw,red){
       sent+=chunk.length;prog(Math.round(sent/total*90));
     }
 
-    // Red layer (three-color)
     if(red){
       for(let i=0;i<red.length;i+=cs){
         const chunk=red.slice(i,i+cs);
@@ -580,7 +599,6 @@ function emptyRedLayer(){
 async function pushText(text){
   renderText(text);
   const bw=canvasToBW();
-  // 三色屏必须发红色层，否则红色RAM是随机数据→噪点
   const red=$("bwrSw").classList.contains("on")?canvasToRed():emptyRedLayer();
   await sendBW(bw,red);
 }

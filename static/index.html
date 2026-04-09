@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1714">
+<link rel="manifest" href="/manifest.json">
+<title>墨水屏 × Claude</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#f5f0e6;--ink:#1a1714;--red:#c0392b;--green:#27ae60;
+  --blue:#2980b9;--gray:#8e8a82;--card:#fffdf7;
+  --shadow:0 2px 20px rgba(26,23,20,0.07);
+  --radius:14px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Noto Serif SC","PingFang SC","Microsoft YaHei",Georgia,serif;
+  background:var(--paper);color:var(--ink);
+  min-height:100vh;min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+
+/* ── Header ── */
+.hdr{
+  background:var(--ink);color:var(--paper);
+  padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+  border-bottom:3px solid var(--red);
+}
+.hdr-l{display:flex;align-items:center;gap:12px}
+.hdr-mark{
+  width:28px;height:28px;
+  background:var(--red);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;
+}
+.hdr-t{font-size:15px;font-weight:700;letter-spacing:2px}
+.hdr-s{font-size:9px;opacity:.4;letter-spacing:1.5px;margin-top:2px;font-family:"JetBrains Mono",monospace}
+
+/* ── Status ── */
+.sts{
+  background:var(--ink);padding:8px 20px;
+  display:flex;align-items:center;gap:18px;
+  font-size:11px;color:#666;
+  font-family:"JetBrains Mono",monospace;
+  position:sticky;top:55px;z-index:49;
+}
+.si{display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.d-off{background:#444}
+.d-on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.d-sse{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.d-tx{background:var(--red);box-shadow:0 0 6px var(--red);animation:blink .4s infinite}
+@keyframes blink{50%{opacity:.3}}
+
+/* ── Progress Bar ── */
+.pbar{
+  height:2px;background:#333;
+  position:sticky;top:80px;z-index:48;
+  overflow:hidden;
+}
+.pbar-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--red),#e74c3c,var(--red));
+  transition:width .3s;
+}
+
+/* ── Container ── */
+.wrap{max-width:480px;margin:0 auto;padding:16px 14px 100px}
+
+/* ── Cards ── */
+.c{
+  background:var(--card);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px;
+  box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.03);
+}
+.ch{
+  font-size:11px;color:var(--gray);margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;
+  letter-spacing:1px;text-transform:uppercase;
+  font-family:"JetBrains Mono",monospace;
+  cursor:pointer;user-select:none;
+}
+.ch .arrow{font-size:8px;transition:transform .2s;margin-left:auto}
+.ch .arrow.open{transform:rotate(90deg)}
+.cb{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.cb.open{max-height:1000px}
+
+/* ── Device Mockup ── */
+.device{
+  background:#d4cfc5;border-radius:16px;
+  padding:10px;position:relative;
+  box-shadow:0 4px 24px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.device-inner{
+  background:#fff;border-radius:8px;
+  overflow:hidden;position:relative;
+  aspect-ratio:4/3;
+}
+.device-inner canvas{width:100%;height:100%;display:block;image-rendering:auto}
+.device-led{
+  width:10px;height:10px;border-radius:50%;
+  background:#555;
+  position:absolute;top:-5px;left:50%;transform:translateX(-50%);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.3);
+  transition:all .5s;
+}
+.device-led.active{
+  background:#3498db;
+  box-shadow:0 0 12px #3498db,inset 0 1px 2px rgba(0,0,0,.2);
+}
+.device-empty{
+  position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;
+  color:#ccc;font-size:13px;font-style:italic;
+}
+
+/* ── Buttons ── */
+.br{display:flex;gap:8px;flex-wrap:wrap}
+.b{
+  padding:10px 20px;border:none;border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:all .15s;
+  position:relative;overflow:hidden;
+}
+.b:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+.b:active:not(:disabled){transform:scale(.97)}
+.b:disabled{opacity:.3;cursor:default}
+.b-ink{background:var(--ink);color:var(--paper)}
+.b-red{background:var(--red);color:#fff}
+.b-grn{background:var(--green);color:#fff}
+.b-blu{background:var(--blue);color:#fff}
+.b-out{background:transparent;color:var(--ink);border:1.5px solid #d5d0c8}
+.b-sm{padding:7px 14px;font-size:11px;border-radius:8px}
+
+/* ── Text Input ── */
+.ta{
+  width:100%;min-height:90px;padding:14px;
+  border:1.5px solid #e5e0d8;border-radius:10px;
+  font-size:14px;font-family:inherit;line-height:1.7;
+  resize:vertical;outline:none;background:transparent;color:var(--ink);
+}
+.ta:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(41,128,185,.1)}
+.ta::placeholder{color:#c5c0b5}
+
+/* ── Image Upload ── */
+.upload-zone{
+  border:2px dashed #d5d0c8;border-radius:10px;
+  padding:20px;text-align:center;cursor:pointer;
+  transition:all .2s;color:var(--gray);font-size:12px;
+}
+.upload-zone:hover{border-color:var(--blue);color:var(--blue)}
+.upload-zone input{display:none}
+
+/* ── Settings ── */
+.sr{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.sr label{font-size:11px;color:var(--gray);min-width:55px;font-family:"JetBrains Mono",monospace}
+.sr input[type=number]{
+  width:65px;padding:7px 8px;border:1.5px solid #e5e0d8;
+  border-radius:8px;font-size:13px;background:transparent;color:var(--ink);font-family:inherit;
+}
+.sr input[type=range]{flex:1;max-width:140px;accent-color:var(--red)}
+.sr .v{font-size:11px;color:var(--gray);min-width:35px;font-family:"JetBrains Mono",monospace}
+
+/* ── Toggle Switch ── */
+.sw{
+  width:40px;height:22px;border-radius:11px;
+  background:#ccc;position:relative;cursor:pointer;
+  transition:background .2s;flex-shrink:0;
+}
+.sw.on{background:var(--green)}
+.sw::after{
+  content:"";position:absolute;width:18px;height:18px;
+  border-radius:50%;background:#fff;top:2px;left:2px;
+  transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.sw.on::after{left:20px}
+
+/* ── Prompt Box ── */
+.pbox{
+  background:#f9f6ee;border:1.5px dashed #d5d0c8;
+  border-radius:10px;padding:14px;
+  font-size:11px;line-height:1.8;color:#777;
+  position:relative;white-space:pre-wrap;word-break:break-all;
+  font-family:"JetBrains Mono",monospace;
+}
+.cpb{
+  position:absolute;top:8px;right:8px;
+  background:var(--ink);color:var(--paper);
+  border:none;border-radius:6px;padding:5px 12px;
+  font-size:10px;cursor:pointer;font-family:inherit;
+}
+.cpb:hover{opacity:.8}
+
+/* ── Log ── */
+.log{
+  background:var(--ink);border-radius:10px;
+  padding:12px 14px;font-family:"JetBrains Mono",monospace;
+  font-size:10px;max-height:140px;overflow-y:auto;
+  line-height:1.8;color:#6a9a4a;
+}
+.log .e{color:#e74c3c}.log .o{color:#2ecc71}.log .i{color:#5dade2}.log .d{color:#444}
+
+/* ── History ── */
+.hi{
+  padding:10px 0;border-bottom:1px solid #f0ece4;
+  display:flex;gap:12px;font-size:12px;line-height:1.5;
+}
+.hi:last-child{border:none}
+.hi-d{font-size:10px;color:var(--gray);flex-shrink:0;min-width:48px;font-family:"JetBrains Mono",monospace}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;top:20px;left:50%;z-index:999;
+  transform:translateX(-50%) translateY(-80px);
+  background:var(--ink);color:var(--paper);
+  padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;
+  box-shadow:0 8px 32px rgba(0,0,0,.3);
+  transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── Footer ── */
+.foot{
+  text-align:center;padding:20px;font-size:10px;
+  color:#ccc;letter-spacing:1px;
+  font-family:"JetBrains Mono",monospace;
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-mark">✦</div>
+    <div>
+      <div class="hdr-t">墨水屏 × Claude</div>
+      <div class="hdr-s">E-INK BLE BRIDGE v2</div>
+    </div>
+  </div>
+</div>
+
+<div class="sts">
+  <div class="si"><div class="dot d-off" id="bleDot"></div><span id="bleT">BLE OFF</span></div>
+  <div class="si"><div class="dot d-off" id="sseDot"></div><span id="sseT">SSE OFF</span></div>
+</div>
+
+<div class="pbar"><div class="pbar-fill" id="pbar"></div></div>
+
+<div class="wrap">
+
+  <!-- BLE -->
+  <div class="c">
+    <div class="ch" style="cursor:default">📡 蓝牙连接</div>
+    <div class="br">
+      <button class="b b-ink" id="btnBle" onclick="toggleBLE()">连接墨水屏</button>
+    </div>
+    <div id="bleHint" style="font-size:11px;color:var(--gray);margin-top:8px;line-height:1.6;display:none">
+      已连接。实时监听开启后，Claude 的推送将自动显示到墨水屏上。
+    </div>
+  </div>
+
+  <!-- SSE -->
+  <div class="c">
+    <div class="ch" style="cursor:default">⚡ 实时监听</div>
+    <div class="br" style="margin-bottom:8px">
+      <button class="b b-grn" id="btnSse" onclick="toggleSSE()">开始监听</button>
+    </div>
+    <div style="font-size:11px;color:var(--gray);line-height:1.6">
+      使用 SSE 实时连接服务器。Claude 推送后<strong>瞬间</strong>收到，无需轮询等待。
+    </div>
+  </div>
+
+  <!-- Device Preview -->
+  <div class="c">
+    <div class="ch" style="cursor:default">🖥️ 屏幕预览</div>
+    <div class="device">
+      <div class="device-led" id="led"></div>
+      <div class="device-inner">
+        <canvas id="cvs" width="400" height="300"></canvas>
+        <div class="device-empty" id="empty">等待内容 ...</div>
+      </div>
+    </div>
+    <div id="lastPush" style="font-size:10px;color:var(--gray);margin-top:8px;text-align:right;font-family:'JetBrains Mono',monospace"></div>
+  </div>
+
+  <!-- Manual Input -->
+  <div class="c">
+    <div class="ch" onclick="tog('manual')">✏️ 手动输入 <span class="arrow" id="manualA">▶</span></div>
+    <div class="cb" id="manualB">
+      <textarea class="ta" id="txt" placeholder="输入要显示在墨水屏上的文字 ..."></textarea>
+      <div class="br" style="margin-top:10px">
+        <button class="b b-blu b-sm" onclick="manualPush()">推送到墨水屏</button>
+        <button class="b b-out b-sm" onclick="preview()">仅预览</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Upload -->
+  <div class="c">
+    <div class="ch" onclick="tog('img')">🖼️ 图片上传 <span class="arrow" id="imgA">▶</span></div>
+    <div class="cb" id="imgB">
+      <div class="upload-zone" id="dropZone" onclick="$('fileIn').click()">
+        <div style="font-size:24px;margin-bottom:6px">📎</div>
+        点击选择图片或拖拽到这里
+        <div style="font-size:10px;margin-top:4px;color:#bbb">支持 JPG / PNG，自动缩放 + Floyd-Steinberg 抖动</div>
+        <input type="file" id="fileIn" accept="image/*" onchange="handleImage(this)">
+      </div>
+      <div class="br" style="margin-top:10px">
+        <button class="b b-blu b-sm" onclick="pushImage()" id="btnPushImg" disabled>推送图片</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="c">
+    <div class="ch" onclick="tog('set')">⚙️ 显示设置 <span class="arrow" id="setA">▶</span></div>
+    <div class="cb" id="setB">
+      <div class="sr"><label>分辨率</label><input type="number" id="dW" value="400" onchange="resCvs()"> × <input type="number" id="dH" value="300" onchange="resCvs()"></div>
+      <div class="sr"><label>字号</label><input type="range" min="12" max="48" value="22" id="fz" oninput="$('fzV').textContent=this.value+'px'"><span class="v" id="fzV">22px</span></div>
+      <div class="sr" style="margin-top:4px">
+        <label>三色屏</label>
+        <div class="sw" id="bwrSw" onclick="this.classList.toggle('on')"></div>
+        <span style="font-size:10px;color:var(--gray)">开启后支持红色显示</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Claude Prompt -->
+  <div class="c">
+    <div class="ch" onclick="tog('prompt')">💬 Claude 对话模板 <span class="arrow" id="promptA">▶</span></div>
+    <div class="cb" id="promptB">
+      <div style="font-size:11px;color:var(--gray);margin-bottom:10px;line-height:1.7">
+        把下面的内容发到任意一个新的 Claude 对话里，之后说"发到墨水屏"就行了。
+      </div>
+      <div class="pbox" id="pContent"><button class="cpb" onclick="copyP()">复制</button></div>
+      <div style="font-size:10px;color:var(--gray);margin-top:10px;line-height:1.7">
+        ⚠️ 记得把 <code style="background:#eae6dc;padding:1px 5px;border-radius:3px;font-size:10px">你的密钥</code> 替换成你在 Render 环境变量里设的 EINK_TOKEN 值。
+        <br>访问 <code style="background:#eae6dc;padding:1px 5px;border-radius:3px;font-size:10px">/api/whoami</code> 可查看密钥提示。
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="c">
+    <div class="ch" onclick="tog('hist')">📜 推送历史 <span class="arrow" id="histA">▶</span></div>
+    <div class="cb" id="histB">
+      <div id="hList" style="color:var(--gray);font-size:12px;font-style:italic">加载中...</div>
+      <button class="b b-out b-sm" style="margin-top:8px" onclick="loadH()">刷新</button>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="c">
+    <div class="ch" onclick="tog('log')">📋 日志 <span class="arrow open" id="logA">▶</span></div>
+    <div class="cb open" id="logB">
+      <div class="log" id="logBox"></div>
+    </div>
+  </div>
+
+  <div class="foot">CLAUDE-NIAMH1228.COM — MADE WITH ♡</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id), API=location.origin;
+
+// ── Helpers ──
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800)}
+function log(m,c="i"){const b=$("logBox"),t=new Date().toLocaleTimeString();b.innerHTML+=`<div class="${c}"><span class="d">${t}</span> ${m}</div>`;b.scrollTop=b.scrollHeight}
+function tog(n){$(n+"A").classList.toggle("open");$(n+"B").classList.toggle("open")}
+function prog(p){$("pbar").style.width=p+"%"}
+
+// ── BLE ──
+const SVC="62750001-d828-918d-fb46-b6c11c675aec",CHR="62750002-d828-918d-fb46-b6c11c675aec";
+let dev,chr,mtu=240,txing=false;
+
+async function toggleBLE(){
+  if(chr){dev?.gatt?.disconnect();chr=null;bleUI(0);log("🔌 已断开");return}
+  if(!navigator.bluetooth){log("❌ 浏览器不支持 Web Bluetooth","e");toast("请用 Chrome 或 Bluefy");return}
+  log("🔍 扫描...");
+  try{
+    dev=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}],optionalServices:[SVC]});
+    log("📡 连接 "+dev.name+"...");
+    const s=await dev.gatt.connect(),sv=await s.getPrimaryService(SVC);
+    chr=await sv.getCharacteristic(CHR);
+    await chr.startNotifications();
+    chr.addEventListener("characteristicvaluechanged",e=>{
+      const v=new TextDecoder().decode(e.target.value);
+      if(v.startsWith("mtu=")){mtu=parseInt(v.split("=")[1])||240;log("📐 MTU="+mtu,"o")}
+    });
+    await chr.writeValueWithResponse(new Uint8Array([0x01]));
+    dev.addEventListener("gattserverdisconnected",()=>{chr=null;bleUI(0);log("🔌 断开","e");toast("墨水屏断开")});
+    bleUI(1,dev.name);log("✅ 已连接 "+dev.name,"o");toast("墨水屏已连接 ✦");
+  }catch(e){log("❌ "+e.message,"e")}
+}
+
+function bleUI(on,nm){
+  $("bleDot").className="dot "+(on?"d-on":"d-off");
+  $("bleT").textContent=on?"BLE: "+nm:"BLE OFF";
+  $("btnBle").textContent=on?"断开墨水屏":"连接墨水屏";
+  $("btnBle").className="b "+(on?"b-red":"b-ink");
+  $("bleHint").style.display=on?"block":"none";
+  $("led").classList.toggle("active",!!on);
+}
+
+// ── Canvas Render ──
+function renderText(text){
+  const w=+$("dW").value||400,h=+$("dH").value||300,fs=+$("fz").value||22;
+  const c=$("cvs");c.width=w;c.height=h;
+  const x=c.getContext("2d");
+  x.fillStyle="#fff";x.fillRect(0,0,w,h);
+  if(!text)return;
+  $("empty").style.display="none";
+
+  x.fillStyle="#000";
+  x.font=fs+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
+  x.textBaseline="top";
+
+  const p=16,lh=fs*1.55,mw=w-p*2;let y=p;
+  for(const ln of text.split("\n")){
+    if(!ln.trim()){y+=lh*.5;continue}
+    let cur="";
+    for(const ch of ln){
+      if(x.measureText(cur+ch).width>mw&&cur){x.fillText(cur,p,y);cur=ch;y+=lh;if(y>h-p-24)break}
+      else cur+=ch;
+    }
+    if(y<=h-p-24){x.fillText(cur,p,y);y+=lh}
+    if(y>h-p-24)break;
+  }
+
+  // Bottom line + marks
+  x.strokeStyle="#c0392b";x.lineWidth=.6;
+  x.beginPath();x.moveTo(p,h-26);x.lineTo(w-p,h-26);x.stroke();
+  x.fillStyle="#c0392b";x.font="bold 10px sans-serif";x.fillText("✦ Claude",w-72,h-16);
+  x.fillStyle="#aaa";x.font="10px sans-serif";
+  x.fillText(new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric"}),p,h-16);
+}
+
+function canvasToBW(){
+  const c=$("cvs"),w=c.width,h=c.height;
+  const d=c.getContext("2d").getImageData(0,0,w,h).data;
+  const rb=Math.ceil(w/8),bw=new Uint8Array(rb*h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;
+    if(d[i]*.299+d[i+1]*.587+d[i+2]*.114>=128)bw[y*rb+(x>>3)]|=0x80>>(x&7);
+  }
+  return bw;
+}
+
+function canvasToRed(){
+  const c=$("cvs"),w=c.width,h=c.height;
+  const d=c.getContext("2d").getImageData(0,0,w,h).data;
+  const rb=Math.ceil(w/8),rd=new Uint8Array(rb*h);
+  rd.fill(0xFF); // default all non-red
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;
+    const r=d[i],g=d[i+1],b=d[i+2];
+    if(r>150&&r>g*1.5&&r>b*1.5) rd[y*rb+(x>>3)]&=~(0x80>>(x&7)); // red pixel
+  }
+  return rd;
+}
+
+function resCvs(){$("cvs").width=+$("dW").value||400;$("cvs").height=+$("dH").value||300}
+
+// ── Image Processing ──
+let imgCanvas=null;
+
+function handleImage(input){
+  const file=input.files[0];if(!file)return;
+  const w=+$("dW").value||400,h=+$("dH").value||300;
+  const img=new Image();
+  img.onload=()=>{
+    // Floyd-Steinberg dithering
+    const tc=document.createElement("canvas");tc.width=w;tc.height=h;
+    const tx=tc.getContext("2d");
+    // Scale image to fit
+    const scale=Math.min(w/img.width,h/img.height);
+    const sw=img.width*scale,sh=img.height*scale;
+    tx.fillStyle="#fff";tx.fillRect(0,0,w,h);
+    tx.drawImage(img,(w-sw)/2,(h-sh)/2,sw,sh);
+
+    // Dither
+    const id=tx.getImageData(0,0,w,h),px=id.data;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;
+      const old=px[i]*.299+px[i+1]*.587+px[i+2]*.114;
+      const nw=old<128?0:255;
+      const err=old-nw;
+      px[i]=px[i+1]=px[i+2]=nw;
+      if(x+1<w){const j=i+4;px[j]+=err*7/16;px[j+1]+=err*7/16;px[j+2]+=err*7/16}
+      if(y+1<h){
+        if(x>0){const j=i+(w-1)*4;px[j]+=err*3/16;px[j+1]+=err*3/16;px[j+2]+=err*3/16}
+        {const j=i+w*4;px[j]+=err*5/16;px[j+1]+=err*5/16;px[j+2]+=err*5/16}
+        if(x+1<w){const j=i+(w+1)*4;px[j]+=err/16;px[j+1]+=err/16;px[j+2]+=err/16}
+      }
+    }
+    tx.putImageData(id,0,0);
+
+    // Show preview
+    const dc=$("cvs");dc.width=w;dc.height=h;
+    dc.getContext("2d").drawImage(tc,0,0);
+    $("empty").style.display="none";
+    imgCanvas=tc;
+    $("btnPushImg").disabled=false;
+    log("🖼️ 图片已加载并抖动处理","o");
+    toast("图片已准备好");
+  };
+  img.src=URL.createObjectURL(file);
+}
+
+// Drag & drop
+const dz=$("dropZone");
+dz.addEventListener("dragover",e=>{e.preventDefault();dz.style.borderColor="var(--blue)"});
+dz.addEventListener("dragleave",()=>dz.style.borderColor="#d5d0c8");
+dz.addEventListener("drop",e=>{e.preventDefault();dz.style.borderColor="#d5d0c8";
+  if(e.dataTransfer.files[0]){$("fileIn").files=e.dataTransfer.files;handleImage($("fileIn"))}
+});
+
+// ── BLE Send ──
+async function sendBW(bw,red){
+  if(!chr){log("❌ 未连接","e");toast("请先连接墨水屏");return}
+  if(txing){log("⏳ 发送中...","i");return}
+  txing=true;$("bleDot").className="dot d-tx";prog(0);
+
+  try{
+    await chr.writeValueWithResponse(new Uint8Array([0x01]));
+    await new Promise(r=>setTimeout(r,200));
+
+    const cs=mtu-2, total=bw.length+(red?red.length:0);let sent=0;
+
+    // BW layer
+    for(let i=0;i<bw.length;i+=cs){
+      const chunk=bw.slice(i,i+cs);
+      const pkt=new Uint8Array(2+chunk.length);
+      pkt[0]=0x30;pkt[1]=(i===0?0x00:0xF0)|0x0F;
+      pkt.set(chunk,2);
+      await chr.writeValueWithResponse(pkt);
+      sent+=chunk.length;prog(Math.round(sent/total*90));
+    }
+
+    // Red layer (three-color)
+    if(red){
+      for(let i=0;i<red.length;i+=cs){
+        const chunk=red.slice(i,i+cs);
+        const pkt=new Uint8Array(2+chunk.length);
+        pkt[0]=0x30;pkt[1]=(i===0?0x00:0xF0);
+        pkt.set(chunk,2);
+        await chr.writeValueWithResponse(pkt);
+        sent+=chunk.length;prog(Math.round(sent/total*90));
+      }
+    }
+
+    prog(95);
+    await chr.writeValueWithResponse(new Uint8Array([0x05]));
+    prog(100);
+    log("✅ 推送成功！","o");
+    toast("已发送到墨水屏 ✦");
+    $("lastPush").textContent="上次推送: "+new Date().toLocaleTimeString();
+    setTimeout(()=>prog(0),2000);
+  }catch(e){log("❌ "+e.message,"e");toast("推送失败");prog(0)}
+
+  $("bleDot").className="dot d-on";txing=false;
+}
+
+async function pushText(text){
+  renderText(text);
+  const bw=canvasToBW();
+  const red=$("bwrSw").classList.contains("on")?canvasToRed():null;
+  await sendBW(bw,red);
+}
+
+async function pushImage(){
+  if(!imgCanvas)return;
+  // Copy dithered image to main canvas
+  const c=$("cvs");c.width=imgCanvas.width;c.height=imgCanvas.height;
+  c.getContext("2d").drawImage(imgCanvas,0,0);
+  const bw=canvasToBW();
+  const red=$("bwrSw").classList.contains("on")?canvasToRed():null;
+  await sendBW(bw,red);
+}
+
+function preview(){const t=$("txt").value.trim();if(t)renderText(t)}
+async function manualPush(){const t=$("txt").value.trim();if(t)await pushText(t)}
+
+// ── SSE ──
+let evtSrc=null;
+
+function toggleSSE(){
+  if(evtSrc){evtSrc.close();evtSrc=null;sseUI(0);log("⏹️ 监听已停止");return}
+  log("⚡ 连接 SSE...");
+  evtSrc=new EventSource(API+"/api/stream");
+  evtSrc.onopen=()=>{sseUI(1);log("⚡ SSE 实时连接已建立","o");toast("实时监听已开启")};
+  evtSrc.onmessage=async(e)=>{
+    try{
+      const d=JSON.parse(e.data);
+      if(d.text){
+        log(`📨 收到: "${d.text.slice(0,40)}${d.text.length>40?"...":""}"`, "o");
+        toast("收到新内容！");
+        $("led").classList.add("active");
+        setTimeout(()=>$("led").classList.remove("active"),3000);
+        if(chr)await pushText(d.text);
+        else renderText(d.text);
+      }
+    }catch(err){}
+  };
+  evtSrc.onerror=()=>{
+    if(evtSrc.readyState===2){sseUI(0);log("❌ SSE 断开，尝试重连...","e")}
+  };
+}
+
+function sseUI(on){
+  $("sseDot").className="dot "+(on?"d-sse":"d-off");
+  $("sseT").textContent=on?"SSE ON":"SSE OFF";
+  $("btnSse").textContent=on?"停止监听":"开始监听";
+  $("btnSse").className="b "+(on?"b-out":"b-grn");
+}
+
+// ── History ──
+async function loadH(){
+  try{
+    const r=await fetch(API+"/api/history?n=15"),d=await r.json();
+    const items=d.items||[];
+    if(!items.length){$("hList").innerHTML='<div style="color:var(--gray)">暂无记录</div>';return}
+    $("hList").innerHTML=items.reverse().map(i=>`<div class="hi"><span class="hi-d">${(i.date||"").slice(5)}</span><span>${(i.text||"").slice(0,80)}${i.text?.length>80?"...":""}</span></div>`).join("");
+  }catch(e){$("hList").innerHTML='<div style="color:var(--gray)">无法加载</div>'}
+}
+
+// ── Prompt ──
+function buildP(){
+  return `我有一块墨水屏通过蓝牙连接，搭建了中转服务器。
+
+当我说"发到墨水屏"或"写到屏幕上"时，请推送内容到我的墨水屏。
+
+方法一（优先）：用代码执行运行 curl：
+curl -s -X POST ${API}/api/letter -H "Content-Type: application/json" -d '{"text":"要显示的内容","token":"你的密钥"}'
+
+方法二（备用，如果 curl 不通）：创建或更新一个 HTML artifact，在页面加载时自动用 fetch 推送：
+fetch("${API}/api/letter",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:"内容",token:"你的密钥"})})
+artifact 上显示推送内容和状态即可。每次更新同一个 artifact，不要重复创建。
+
+规则：
+- 墨水屏分辨率 400×300，只显示纯黑白
+- 内容控制在 100 字以内
+- 不要用 markdown、emoji 或特殊符号
+- 推送成功后说"已发送 ✦ 约10秒后刷新"
+- 如果我说"写一封信到墨水屏"，用温暖文艺的语气
+
+请确认你理解了。`}
+
+function copyP(){navigator.clipboard?.writeText(buildP()).then(()=>toast("已复制 ✓"))}
+
+// ── Init ──
+log("✦ 页面已加载","o");
+log("① 连接墨水屏蓝牙","i");
+log("② 开启实时监听","i");
+log("③ 在 Claude 对话中说「发到墨水屏」","i");
+
+const pc=$("pContent");
+const span=document.createElement("span");
+span.style.whiteSpace="pre-wrap";
+span.textContent=buildP();
+pc.appendChild(span);
+
+resCvs();loadH();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+latest_letter.json
+history.json
+token.txt
+__pycache__/
+*.pyc
+.env

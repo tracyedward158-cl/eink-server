@@ -327,7 +327,7 @@ body{
     <div class="ch" onclick="tog('set')">⚙️ 显示设置 <span class="arrow" id="setA">▶</span></div>
     <div class="cb" id="setB">
       <div class="sr"><label>分辨率</label><input type="number" id="dW" value="400" onchange="resCvs()"> × <input type="number" id="dH" value="300" onchange="resCvs()"></div>
-      <div class="sr"><label>字号</label><input type="range" min="12" max="48" value="22" id="fz" oninput="$('fzV').textContent=this.value+'px'"><span class="v" id="fzV">22px</span></div>
+      <div class="sr"><label>字号</label><input type="range" min="16" max="56" value="28" id="fz" oninput="$('fzV').textContent=this.value+'px'"><span class="v" id="fzV">28px</span></div>
       <div class="sr" style="margin-top:4px">
         <label>三色屏</label>
         <div class="sw" id="bwrSw" onclick="this.classList.toggle('on')"></div>
@@ -415,57 +415,76 @@ function bleUI(on,nm){
 
 // ── Canvas Render ──
 function renderText(text){
-  const w=+$("dW").value||400,h=+$("dH").value||300,fs=+$("fz").value||22;
+  const w=+$("dW").value||400,h=+$("dH").value||300,fs=+$("fz").value||28;
   const c=$("cvs");c.width=w;c.height=h;
   const x=c.getContext("2d");
   x.fillStyle="#fff";x.fillRect(0,0,w,h);
 
   // ── Corner frames ──
-  const m=12, cl=28, cw=2;  // margin, corner length, line width
+  const m=12, cl=28, cw=2;
   x.strokeStyle="#000";x.lineWidth=cw;
-  // top-left
   x.beginPath();x.moveTo(m,m+cl);x.lineTo(m,m);x.lineTo(m+cl,m);x.stroke();
-  // top-right
   x.beginPath();x.moveTo(w-m-cl,m);x.lineTo(w-m,m);x.lineTo(w-m,m+cl);x.stroke();
-  // bottom-left
   x.beginPath();x.moveTo(m,h-m-cl);x.lineTo(m,h-m);x.lineTo(m+cl,h-m);x.stroke();
-  // bottom-right
   x.beginPath();x.moveTo(w-m-cl,h-m);x.lineTo(w-m,h-m);x.lineTo(w-m,h-m-cl);x.stroke();
 
   if(!text)return;
   $("empty").style.display="none";
 
-  // ── Text body ──
+  // ── Measure text to center vertically ──
   x.fillStyle="#000";
   x.font=fs+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
   x.textBaseline="top";
 
-  const p=24,lh=fs*1.55,mw=w-p*2;
-  const bottomZone=36; // reserved for date + signature
-  let y=p;
+  const p=28,lh=fs*1.55,mw=w-p*2;
+  const sigHeight=48; // reserved for date + signature
+
+  // First pass: calculate all wrapped lines
+  const lines=[];
   for(const ln of text.split("\n")){
-    if(!ln.trim()){y+=lh*.5;continue}
+    if(!ln.trim()){lines.push("");continue}
     let cur="";
     for(const ch of ln){
-      if(x.measureText(cur+ch).width>mw&&cur){x.fillText(cur,p,y);cur=ch;y+=lh;if(y>h-p-bottomZone)break}
+      if(x.measureText(cur+ch).width>mw&&cur){lines.push(cur);cur=ch}
       else cur+=ch;
     }
-    if(y<=h-p-bottomZone){x.fillText(cur,p,y);y+=lh}
-    if(y>h-p-bottomZone)break;
+    if(cur)lines.push(cur);
+  }
+
+  // Calculate total text height
+  let totalH=0;
+  for(const ln of lines){totalH+=ln===""?lh*.5:lh}
+
+  // Available area for text (between corners and signature)
+  const topBound=m+cw+8;
+  const bottomBound=h-m-sigHeight;
+  const availH=bottomBound-topBound;
+
+  // Center vertically
+  let startY=topBound+Math.max(0,(availH-totalH)/2);
+
+  // Second pass: draw centered
+  x.textAlign="center";
+  let y=startY;
+  for(const ln of lines){
+    if(ln===""){y+=lh*.5;continue}
+    if(y>bottomBound)break;
+    x.fillText(ln,w/2,y);
+    y+=lh;
   }
 
   // ── Bottom: date centered, "From Claude" right ──
   const dateStr=new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric"});
-  const bottomY=h-m-14;
+  const bottomY=h-m-28;
 
   // Date - centered
   x.fillStyle="#000";x.font="12px 'Noto Serif SC','PingFang SC',serif";
   x.textAlign="center";
-  x.fillText(dateStr,w/2,bottomY);
+  x.fillText(dateStr,w/2,bottomY+10);
 
-  // From Claude - right aligned, script font
+  // From Claude - right aligned, bigger
   x.textAlign="right";
-  x.font="500 17px 'Dancing Script',cursive";
+  x.font="700 22px 'Dancing Script',cursive";
   x.fillText("From Claude",w-m-6,bottomY);
 
   // Reset textAlign

@@ -183,22 +183,6 @@ body{
 }
 .sw.on::after{left:20px}
 
-/* ── Prompt Box ── */
-.pbox{
-  background:#f9f6ee;border:1.5px dashed #d5d0c8;
-  border-radius:10px;padding:14px;
-  font-size:11px;line-height:1.8;color:#777;
-  position:relative;white-space:pre-wrap;word-break:break-all;
-  font-family:"JetBrains Mono",monospace;
-}
-.cpb{
-  position:absolute;top:8px;right:8px;
-  background:var(--ink);color:var(--paper);
-  border:none;border-radius:6px;padding:5px 12px;
-  font-size:10px;cursor:pointer;font-family:inherit;
-}
-.cpb:hover{opacity:.8}
-
 /* ── Log ── */
 .log{
   background:var(--ink);border-radius:10px;
@@ -298,7 +282,7 @@ body{
   <div class="c">
     <div class="ch" onclick="tog('manual')">✏️ 手动输入 <span class="arrow" id="manualA">▶</span></div>
     <div class="cb" id="manualB">
-      <textarea class="ta" id="txt" placeholder="输入要显示在墨水屏上的文字 ..."></textarea>
+      <textarea class="ta" id="txt" placeholder="支持标签：&#10;<r>红色</r>  <b>加粗</b>  <i>斜体</i>&#10;可嵌套：<b><r>加粗红色</r></b>"></textarea>
       <div class="br" style="margin-top:10px">
         <button class="b b-blu b-sm" onclick="manualPush()">推送到墨水屏</button>
         <button class="b b-out b-sm" onclick="preview()">仅预览</button>
@@ -332,21 +316,6 @@ body{
         <label>三色屏</label>
         <div class="sw" id="bwrSw" onclick="this.classList.toggle('on')"></div>
         <span style="font-size:10px;color:var(--gray)">开启后支持红色显示</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Claude Prompt -->
-  <div class="c">
-    <div class="ch" onclick="tog('prompt')">💬 Claude 对话模板 <span class="arrow" id="promptA">▶</span></div>
-    <div class="cb" id="promptB">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:10px;line-height:1.7">
-        把下面的内容发到任意一个新的 Claude 对话里，之后说"发到墨水屏"就行了。
-      </div>
-      <div class="pbox" id="pContent"><button class="cpb" onclick="copyP()">复制</button></div>
-      <div style="font-size:10px;color:var(--gray);margin-top:10px;line-height:1.7">
-        ⚠️ 记得把 <code style="background:#eae6dc;padding:1px 5px;border-radius:3px;font-size:10px">你的密钥</code> 替换成你在 Render 环境变量里设的 EINK_TOKEN 值。
-        <br>访问 <code style="background:#eae6dc;padding:1px 5px;border-radius:3px;font-size:10px">/api/whoami</code> 可查看密钥提示。
       </div>
     </div>
   </div>
@@ -413,73 +382,171 @@ function bleUI(on,nm){
   $("led").classList.toggle("active",!!on);
 }
 
-// ── Canvas Render ──
+// ══════════════════════════════════════════════════════
+// ── Rich Text Parser: <r> <b> <i> tags ──
+// ══════════════════════════════════════════════════════
+
+/**
+ * Parse text with <r>, <b>, <i> tags into segments.
+ * Returns: [{text, red, bold, italic}, ...]
+ * Tags can nest: <b><r>hello</r></b>
+ */
+function parseRichText(raw){
+  const segs=[];
+  let pos=0;
+  // State stack for nesting
+  let red=false, bold=false, italic=false;
+  const stateStack=[];
+  const tagRe=/<\/?([rbi])>/gi;
+  let m;
+  while((m=tagRe.exec(raw))!==null){
+    // Push text before this tag
+    if(m.index>pos){
+      segs.push({text:raw.slice(pos,m.index), red, bold, italic});
+    }
+    const tag=m[1].toLowerCase();
+    const isClose=m[0][1]==='/';
+    if(!isClose){
+      stateStack.push({red,bold,italic});
+      if(tag==='r') red=true;
+      if(tag==='b') bold=true;
+      if(tag==='i') italic=true;
+    }else{
+      // Pop state
+      if(stateStack.length){
+        const prev=stateStack.pop();
+        red=prev.red; bold=prev.bold; italic=prev.italic;
+      }
+    }
+    pos=m.index+m[0].length;
+  }
+  // Remaining text
+  if(pos<raw.length){
+    segs.push({text:raw.slice(pos), red, bold, italic});
+  }
+  return segs;
+}
+
+/** Build canvas font string */
+function makeFont(fs, bold, italic){
+  let s='';
+  if(italic) s+='italic ';
+  s+=(bold?'700 ':'400 ');
+  s+=fs+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
+  return s;
+}
+
+// ══════════════════════════════════════════════════════
+// ── Canvas Render (rich text aware) ──
+// ══════════════════════════════════════════════════════
+
 function renderText(text){
-  const w=+$("dW").value||400,h=+$("dH").value||300,fs=+$("fz").value||28;
-  const c=$("cvs");c.width=w;c.height=h;
+  const w=+$("dW").value||400, h=+$("dH").value||300, fs=+$("fz").value||28;
+  const c=$("cvs"); c.width=w; c.height=h;
   const x=c.getContext("2d");
-  x.fillStyle="#fff";x.fillRect(0,0,w,h);
+  x.fillStyle="#fff"; x.fillRect(0,0,w,h);
 
   // ── Corner frames ──
-  const m=12, cl=28, cw=2;
-  x.strokeStyle="#000";x.lineWidth=cw;
-  x.beginPath();x.moveTo(m,m+cl);x.lineTo(m,m);x.lineTo(m+cl,m);x.stroke();
-  x.beginPath();x.moveTo(w-m-cl,m);x.lineTo(w-m,m);x.lineTo(w-m,m+cl);x.stroke();
-  x.beginPath();x.moveTo(m,h-m-cl);x.lineTo(m,h-m);x.lineTo(m+cl,h-m);x.stroke();
-  x.beginPath();x.moveTo(w-m-cl,h-m);x.lineTo(w-m,h-m);x.lineTo(w-m,h-m-cl);x.stroke();
+  const mg=12, cl=28, cw=2;
+  x.strokeStyle="#000"; x.lineWidth=cw;
+  x.beginPath();x.moveTo(mg,mg+cl);x.lineTo(mg,mg);x.lineTo(mg+cl,mg);x.stroke();
+  x.beginPath();x.moveTo(w-mg-cl,mg);x.lineTo(w-mg,mg);x.lineTo(w-mg,mg+cl);x.stroke();
+  x.beginPath();x.moveTo(mg,h-mg-cl);x.lineTo(mg,h-mg);x.lineTo(mg+cl,h-mg);x.stroke();
+  x.beginPath();x.moveTo(w-mg-cl,h-mg);x.lineTo(w-mg,h-mg);x.lineTo(w-mg,h-mg-cl);x.stroke();
 
-  if(!text)return;
+  if(!text) return;
   $("empty").style.display="none";
 
-  // ── Measure text to center vertically ──
-  x.fillStyle="#000";
-  x.font=fs+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
-  x.textBaseline="top";
+  const pad=28, lh=fs*1.55, maxW=w-pad*2;
+  const sigHeight=48;
 
-  const p=28,lh=fs*1.55,mw=w-p*2;
-  const sigHeight=48; // reserved for date + signature
+  // Split by newlines first, then parse each line for tags
+  const rawLines=text.split("\n");
 
-  // First pass: calculate all wrapped lines
-  const lines=[];
-  for(const ln of text.split("\n")){
-    if(!ln.trim()){lines.push("");continue}
-    let cur="";
-    for(const ch of ln){
-      if(x.measureText(cur+ch).width>mw&&cur){lines.push(cur);cur=ch}
-      else cur+=ch;
+  // Build wrapped lines. Each wrapped line = array of segments
+  // A segment = {text, red, bold, italic}
+  const wrappedLines=[]; // each entry: {segs:[...], isEmpty:bool}
+
+  for(const rawLine of rawLines){
+    if(!rawLine.trim()){
+      wrappedLines.push({segs:[], isEmpty:true});
+      continue;
     }
-    if(cur)lines.push(cur);
+    const segs=parseRichText(rawLine);
+    // Now word-wrap: iterate char by char across segments, track width
+    let curLineSegs=[]; // segments for current wrapped line
+    let curSeg={text:'', red:false, bold:false, italic:false};
+    let curW=0;
+
+    for(const seg of segs){
+      // Set font to measure this segment's chars
+      const font=makeFont(fs, seg.bold, seg.italic);
+      x.font=font;
+      for(const ch of seg.text){
+        const chW=x.measureText(ch).width;
+        // Check if same style as curSeg
+        const sameStyle=(seg.red===curSeg.red && seg.bold===curSeg.bold && seg.italic===curSeg.italic);
+        if(curW+chW>maxW && (curLineSegs.length>0 || curSeg.text)){
+          // Wrap: push current segment, push line, start new line
+          if(curSeg.text) curLineSegs.push({...curSeg});
+          wrappedLines.push({segs:curLineSegs, isEmpty:false});
+          curLineSegs=[];
+          curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic};
+          curW=chW;
+        }else if(sameStyle){
+          curSeg.text+=ch;
+          curW+=chW;
+        }else{
+          // Style change within the line
+          if(curSeg.text) curLineSegs.push({...curSeg});
+          curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic};
+          curW+=chW;
+        }
+      }
+    }
+    // Flush remaining
+    if(curSeg.text) curLineSegs.push({...curSeg});
+    if(curLineSegs.length) wrappedLines.push({segs:curLineSegs, isEmpty:false});
   }
 
-  // Calculate total text height
+  // Calculate total height
   let totalH=0;
-  for(const ln of lines){totalH+=ln===""?lh*.5:lh}
+  for(const ln of wrappedLines) totalH+=ln.isEmpty?lh*0.5:lh;
 
-  // Available area for text (between corners and signature)
-  const topBound=m+cw+8;
-  const bottomBound=h-m-sigHeight;
+  const topBound=mg+cw+8;
+  const bottomBound=h-mg-sigHeight;
   const availH=bottomBound-topBound;
-
-  // Center vertically
   let startY=topBound+Math.max(0,(availH-totalH)/2);
 
-  // Second pass: draw centered
-  x.textAlign="center";
+  // Draw each line centered
   let y=startY;
-  for(const ln of lines){
-    if(ln===""){y+=lh*.5;continue}
-    if(y>bottomBound)break;
-    x.fillText(ln,w/2,y);
+  for(const ln of wrappedLines){
+    if(ln.isEmpty){y+=lh*0.5; continue;}
+    if(y>bottomBound) break;
+
+    // Measure total line width for centering
+    let lineW=0;
+    for(const seg of ln.segs){
+      x.font=makeFont(fs, seg.bold, seg.italic);
+      lineW+=x.measureText(seg.text).width;
+    }
+
+    let drawX=w/2-lineW/2;
+    for(const seg of ln.segs){
+      x.font=makeFont(fs, seg.bold, seg.italic);
+      x.fillStyle=seg.red?'#c0392b':'#000';
+      x.textBaseline='top';
+      x.fillText(seg.text, drawX, y);
+      drawX+=x.measureText(seg.text).width;
+    }
     y+=lh;
   }
 
   // ── Bottom: "From Claude" centered ──
   x.fillStyle="#000";
   x.textAlign="center";
-  x.font="700 24px 'Dancing Script',cursive";
-  x.fillText("From Claude",w/2,h-m-18);
-
-  // Reset textAlign
+  x.font="700 27px 'Dancing Script',cursive";
+  x.fillText("From Claude",w/2,h-mg-18);
   x.textAlign="left";
 }
 
@@ -669,41 +736,12 @@ async function loadH(){
   }catch(e){$("hList").innerHTML='<div style="color:var(--gray)">无法加载</div>'}
 }
 
-// ── Prompt ──
-function buildP(){
-  return `我有一块墨水屏通过蓝牙连接，搭建了中转服务器。
-
-当我说"发到墨水屏"或"写到屏幕上"时，请推送内容到我的墨水屏。
-
-方法一（优先）：用代码执行运行 curl：
-curl -s -X POST ${API}/api/letter -H "Content-Type: application/json" -d '{"text":"要显示的内容","token":"你的密钥"}'
-
-方法二（备用，如果 curl 不通）：创建或更新一个 HTML artifact，在页面加载时自动用 fetch 推送：
-fetch("${API}/api/letter",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:"内容",token:"你的密钥"})})
-artifact 上显示推送内容和状态即可。每次更新同一个 artifact，不要重复创建。
-
-规则：
-- 墨水屏分辨率 400×300，只显示纯黑白
-- 内容控制在 100 字以内
-- 不要用 markdown、emoji 或特殊符号
-- 推送成功后说"已发送 ✦ 约10秒后刷新"
-- 如果我说"写一封信到墨水屏"，用英语，想说什么都可以
-
-请确认你理解了。`}
-
-function copyP(){navigator.clipboard?.writeText(buildP()).then(()=>toast("已复制 ✓"))}
-
 // ── Init ──
 log("✦ 页面已加载","o");
 log("① 连接墨水屏蓝牙","i");
 log("② 开启实时监听","i");
 log("③ 在 Claude 对话中说「发到墨水屏」","i");
-
-const pc=$("pContent");
-const span=document.createElement("span");
-span.style.whiteSpace="pre-wrap";
-span.textContent=buildP();
-pc.appendChild(span);
+log("📝 支持标签: <r>红色</r> <b>加粗</b> <i>斜体</i>","i");
 
 resCvs();loadH();
 </script>

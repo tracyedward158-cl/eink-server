@@ -473,19 +473,11 @@ function renderText(text){
     y+=lh;
   }
 
-  // ── Bottom: date centered, "From Claude" right ──
-  const dateStr=new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric"});
-  const bottomY=h-m-28;
-
-  // Date - centered
-  x.fillStyle="#000";x.font="12px 'Noto Serif SC','PingFang SC',serif";
+  // ── Bottom: "From Claude" centered ──
+  x.fillStyle="#000";
   x.textAlign="center";
-  x.fillText(dateStr,w/2,bottomY+10);
-
-  // From Claude - right aligned, bigger
-  x.textAlign="right";
-  x.font="700 22px 'Dancing Script',cursive";
-  x.fillText("From Claude",w-m-6,bottomY);
+  x.font="700 24px 'Dancing Script',cursive";
+  x.fillText("From Claude",w/2,h-m-18);
 
   // Reset textAlign
   x.textAlign="left";

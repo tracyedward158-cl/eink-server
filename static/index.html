@@ -25,7 +25,7 @@ body{
   -webkit-font-smoothing:antialiased;
   overscroll-behavior:none;
 }
-
+ 
 /* ── Header ── */
 .hdr{
   background:var(--ink);color:var(--paper);
@@ -43,7 +43,7 @@ body{
 }
 .hdr-t{font-size:15px;font-weight:700;letter-spacing:2px}
 .hdr-s{font-size:9px;opacity:.4;letter-spacing:1.5px;margin-top:2px;font-family:"JetBrains Mono",monospace}
-
+ 
 /* ── Status ── */
 .sts{
   background:var(--ink);padding:8px 20px;
@@ -59,7 +59,7 @@ body{
 .d-sse{background:var(--blue);box-shadow:0 0 8px var(--blue)}
 .d-tx{background:var(--red);box-shadow:0 0 6px var(--red);animation:blink .4s infinite}
 @keyframes blink{50%{opacity:.3}}
-
+ 
 /* ── Progress Bar ── */
 .pbar{
   height:2px;background:#333;
@@ -71,10 +71,10 @@ body{
   background:linear-gradient(90deg,var(--red),#e74c3c,var(--red));
   transition:width .3s;
 }
-
+ 
 /* ── Container ── */
 .wrap{max-width:480px;margin:0 auto;padding:16px 14px 100px}
-
+ 
 /* ── Cards ── */
 .c{
   background:var(--card);border-radius:var(--radius);
@@ -92,7 +92,7 @@ body{
 .ch .arrow.open{transform:rotate(90deg)}
 .cb{max-height:0;overflow:hidden;transition:max-height .35s ease}
 .cb.open{max-height:1000px}
-
+ 
 /* ── Device Mockup ── */
 .device{
   background:#d4cfc5;border-radius:16px;
@@ -121,7 +121,7 @@ body{
   align-items:center;justify-content:center;
   color:#ccc;font-size:13px;font-style:italic;
 }
-
+ 
 /* ── Buttons ── */
 .br{display:flex;gap:8px;flex-wrap:wrap}
 .b{
@@ -139,7 +139,7 @@ body{
 .b-blu{background:var(--blue);color:#fff}
 .b-out{background:transparent;color:var(--ink);border:1.5px solid #d5d0c8}
 .b-sm{padding:7px 14px;font-size:11px;border-radius:8px}
-
+ 
 /* ── Text Input ── */
 .ta{
   width:100%;min-height:90px;padding:14px;
@@ -149,7 +149,7 @@ body{
 }
 .ta:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(41,128,185,.1)}
 .ta::placeholder{color:#c5c0b5}
-
+ 
 /* ── Image Upload ── */
 .upload-zone{
   border:2px dashed #d5d0c8;border-radius:10px;
@@ -158,7 +158,7 @@ body{
 }
 .upload-zone:hover{border-color:var(--blue);color:var(--blue)}
 .upload-zone input{display:none}
-
+ 
 /* ── Settings ── */
 .sr{display:flex;gap:10px;align-items:center;margin-bottom:10px}
 .sr label{font-size:11px;color:var(--gray);min-width:55px;font-family:"JetBrains Mono",monospace}
@@ -168,7 +168,7 @@ body{
 }
 .sr input[type=range]{flex:1;max-width:140px;accent-color:var(--red)}
 .sr .v{font-size:11px;color:var(--gray);min-width:35px;font-family:"JetBrains Mono",monospace}
-
+ 
 /* ── Toggle Switch ── */
 .sw{
   width:40px;height:22px;border-radius:11px;
@@ -182,7 +182,7 @@ body{
   transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);
 }
 .sw.on::after{left:20px}
-
+ 
 /* ── Log ── */
 .log{
   background:var(--ink);border-radius:10px;
@@ -191,7 +191,7 @@ body{
   line-height:1.8;color:#6a9a4a;
 }
 .log .e{color:#e74c3c}.log .o{color:#2ecc71}.log .i{color:#5dade2}.log .d{color:#444}
-
+ 
 /* ── History ── */
 .hi{
   padding:10px 0;border-bottom:1px solid #f0ece4;
@@ -199,7 +199,7 @@ body{
 }
 .hi:last-child{border:none}
 .hi-d{font-size:10px;color:var(--gray);flex-shrink:0;min-width:48px;font-family:"JetBrains Mono",monospace}
-
+ 
 /* ── Toast ── */
 .toast{
   position:fixed;top:20px;left:50%;z-index:999;
@@ -211,7 +211,7 @@ body{
   pointer-events:none;
 }
 .toast.show{transform:translateX(-50%) translateY(0)}
-
+ 
 /* ── Footer ── */
 .foot{
   text-align:center;padding:20px;font-size:10px;
@@ -221,9 +221,9 @@ body{
 </style>
 </head>
 <body>
-
+ 
 <div class="toast" id="toast"></div>
-
+ 
 <div class="hdr">
   <div class="hdr-l">
     <div class="hdr-mark">✦</div>
@@ -233,18 +233,18 @@ body{
     </div>
   </div>
 </div>
-
+ 
 <div class="sts">
   <div class="si"><div class="dot d-off" id="bleDot"></div><span id="bleT">BLE OFF</span></div>
   <div class="si"><div class="dot d-off" id="sseDot"></div><span id="sseT">SSE OFF</span></div>
 </div>
-
+ 
 <div class="pbar"><div class="pbar-fill" id="pbar"></div></div>
-
+ 
 <div class="wrap">
-
+ 
   <div class="c">
-    <div class="ch" style="cursor:default">📡 蓝牙连接</div>
+    <div class="ch" style="cursor:default">📶 蓝牙连接</div>
     <div class="br">
       <button class="b b-ink" id="btnBle" onclick="toggleBLE()">连接墨水屏</button>
     </div>
@@ -252,7 +252,7 @@ body{
       已连接。实时监听开启后，Claude 的推送将自动显示到墨水屏上。
     </div>
   </div>
-
+ 
   <div class="c">
     <div class="ch" style="cursor:default">⚡ 实时监听</div>
     <div class="br" style="margin-bottom:8px">
@@ -262,9 +262,9 @@ body{
       使用 SSE 实时连接服务器。Claude 推送后<strong>瞬间</strong>收到，无需轮询等待。
     </div>
   </div>
-
+ 
   <div class="c">
-    <div class="ch" style="cursor:default">🖥️ 屏幕预览</div>
+    <div class="ch" style="cursor:default">🖼️ 屏幕预览</div>
     <div class="device">
       <div class="device-led" id="led"></div>
       <div class="device-inner">
@@ -274,23 +274,25 @@ body{
     </div>
     <div id="lastPush" style="font-size:10px;color:var(--gray);margin-top:8px;text-align:right;font-family:'JetBrains Mono',monospace"></div>
   </div>
-
+ 
   <div class="c">
     <div class="ch" onclick="tog('manual')">✏️ 手动输入 <span class="arrow" id="manualA">▶</span></div>
     <div class="cb" id="manualB">
-      <textarea class="ta" id="txt" placeholder="支持标签：&#10;<r>红色</r>  <b>加粗</b>  <i>斜体</i>&#10;可嵌套：<b><r>加粗红色</r></b>"></textarea>
+      <textarea class="ta" id="txt" placeholder="支持标签：
+<r>红色</r>  <b>加粗</b>  <i>斜体</i> <big>大字</big>
+可嵌套：<b><r>加粗红色</r></b>"></textarea>
       <div class="br" style="margin-top:10px">
         <button class="b b-blu b-sm" onclick="manualPush()">推送到墨水屏</button>
         <button class="b b-out b-sm" onclick="preview()">仅预览</button>
       </div>
     </div>
   </div>
-
+ 
   <div class="c">
     <div class="ch" onclick="tog('img')">🖼️ 图片上传 <span class="arrow" id="imgA">▶</span></div>
     <div class="cb" id="imgB">
       <div class="upload-zone" id="dropZone" onclick="$('fileIn').click()">
-        <div style="font-size:24px;margin-bottom:6px">📎</div>
+        <div style="font-size:24px;margin-bottom:6px">📸</div>
         点击选择图片或拖拽到这里
         <div style="font-size:10px;margin-top:4px;color:#bbb">支持 JPG / PNG，自动缩放 + Floyd-Steinberg 抖动</div>
         <input type="file" id="fileIn" accept="image/*" onchange="handleImage(this)">
@@ -300,7 +302,7 @@ body{
       </div>
     </div>
   </div>
-
+ 
   <div class="c">
     <div class="ch" onclick="tog('set')">⚙️ 显示设置 <span class="arrow" id="setA">▶</span></div>
     <div class="cb" id="setB">
@@ -313,7 +315,7 @@ body{
       </div>
     </div>
   </div>
-
+ 
   <div class="c">
     <div class="ch" onclick="tog('hist')">📜 推送历史 <span class="arrow" id="histA">▶</span></div>
     <div class="cb" id="histB">
@@ -321,50 +323,50 @@ body{
       <button class="b b-out b-sm" style="margin-top:8px" onclick="loadH()">刷新</button>
     </div>
   </div>
-
+ 
   <div class="c">
     <div class="ch" onclick="tog('log')">📋 日志 <span class="arrow open" id="logA">▶</span></div>
     <div class="cb open" id="logB">
       <div class="log" id="logBox"></div>
     </div>
   </div>
-
+ 
   <div class="foot">CLAUDE-NIAMH1228.COM — MADE WITH ♡</div>
 </div>
-
+ 
 <script>
 const $=id=>document.getElementById(id), API=location.origin;
-
+ 
 // ── Helpers ──
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800)}
 function log(m,c="i"){const b=$("logBox"),t=new Date().toLocaleTimeString();b.innerHTML+=`<div class="${c}"><span class="d">${t}</span> ${m}</div>`;b.scrollTop=b.scrollHeight}
 function tog(n){$(n+"A").classList.toggle("open");$(n+"B").classList.toggle("open")}
 function prog(p){$("pbar").style.width=p+"%"}
-
+ 
 // ── BLE ──
 const SVC="62750001-d828-918d-fb46-b6c11c675aec",CHR="62750002-d828-918d-fb46-b6c11c675aec";
 let dev,chr,mtu=240,txing=false;
-
+ 
 async function toggleBLE(){
   if(chr){dev?.gatt?.disconnect();chr=null;bleUI(0);log("🔌 已断开");return}
   if(!navigator.bluetooth){log("❌ 浏览器不支持 Web Bluetooth","e");toast("请用 Chrome 或 Bluefy");return}
   log("🔍 扫描...");
   try{
     dev=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}],optionalServices:[SVC]});
-    log("📡 连接 "+dev.name+"...");
+    log("🔗 连接 "+dev.name+"...");
     const s=await dev.gatt.connect(),sv=await s.getPrimaryService(SVC);
     chr=await sv.getCharacteristic(CHR);
     await chr.startNotifications();
     chr.addEventListener("characteristicvaluechanged",e=>{
       const v=new TextDecoder().decode(e.target.value);
-      if(v.startsWith("mtu=")){mtu=parseInt(v.split("=")[1])||240;log("📐 MTU="+mtu,"o")}
+      if(v.startsWith("mtu=")){mtu=parseInt(v.split("=")[1])||240;log("⚙️ MTU="+mtu,"o")}
     });
     await chr.writeValueWithResponse(new Uint8Array([0x01]));
     dev.addEventListener("gattserverdisconnected",()=>{chr=null;bleUI(0);log("🔌 断开","e");toast("墨水屏断开")});
     bleUI(1,dev.name);log("✅ 已连接 "+dev.name,"o");toast("墨水屏已连接 ✦");
   }catch(e){log("❌ "+e.message,"e")}
 }
-
+ 
 function bleUI(on,nm){
   $("bleDot").className="dot "+(on?"d-on":"d-off");
   $("bleT").textContent=on?"BLE: "+nm:"BLE OFF";
@@ -373,71 +375,61 @@ function bleUI(on,nm){
   $("bleHint").style.display=on?"block":"none";
   $("led").classList.toggle("active",!!on);
 }
-
+ 
 // ══════════════════════════════════════════════════════
-// ── Rich Text Parser: <r> <b> <i> tags ──
+// ── Rich Text Parser (新增了 big 标签支持) ──
 // ══════════════════════════════════════════════════════
-
-/**
- * Parse text with <r>, <b>, <i> tags into segments.
- * Returns: [{text, red, bold, italic}, ...]
- * Tags can nest: <b><r>hello</r></b>
- */
 function parseRichText(raw){
   const segs=[];
   let pos=0;
-  // State stack for nesting
-  let red=false, bold=false, italic=false;
+  let red=false, bold=false, italic=false, big=false;
   const stateStack=[];
-  const tagRe=/<\/?([rbi])>/gi;
+  // 正则匹配 r, b, i, big
+  const tagRe=/<\/?([rbi]|big)>/gi;
   let m;
   while((m=tagRe.exec(raw))!==null){
-    // Push text before this tag
     if(m.index>pos){
-      segs.push({text:raw.slice(pos,m.index), red, bold, italic});
+      segs.push({text:raw.slice(pos,m.index), red, bold, italic, big});
     }
     const tag=m[1].toLowerCase();
     const isClose=m[0][1]==='/';
     if(!isClose){
-      stateStack.push({red,bold,italic});
+      stateStack.push({red,bold,italic,big});
       if(tag==='r') red=true;
       if(tag==='b') bold=true;
       if(tag==='i') italic=true;
+      if(tag==='big') big=true;
     }else{
-      // Pop state
       if(stateStack.length){
         const prev=stateStack.pop();
-        red=prev.red; bold=prev.bold; italic=prev.italic;
+        red=prev.red; bold=prev.bold; italic=prev.italic; big=prev.big;
       }
     }
     pos=m.index+m[0].length;
   }
-  // Remaining text
   if(pos<raw.length){
-    segs.push({text:raw.slice(pos), red, bold, italic});
+    segs.push({text:raw.slice(pos), red, bold, italic, big});
   }
   return segs;
 }
-
-/** Build canvas font string */
-function makeFont(fs, bold, italic){
+ 
+function makeFont(size, bold, italic){
   let s='';
   if(italic) s+='italic ';
   s+=(bold?'700 ':'400 ');
-  s+=fs+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
+  s+=size+"px 'Noto Serif SC','PingFang SC','Microsoft YaHei',serif";
   return s;
 }
-
+ 
 // ══════════════════════════════════════════════════════
-// ── Canvas Render (rich text aware) ──
+// ── Canvas Render (新增自动缩放排版算法) ──
 // ══════════════════════════════════════════════════════
-
 function renderText(text){
   const w=+$("dW").value||400, h=+$("dH").value||300, fs=+$("fz").value||28;
   const c=$("cvs"); c.width=w; c.height=h;
   const x=c.getContext("2d");
   x.fillStyle="#fff"; x.fillRect(0,0,w,h);
-
+ 
   // ── Corner frames ──
   const mg=12, cl=28, cw=2;
   x.strokeStyle="#000"; x.lineWidth=cw;
@@ -445,103 +437,114 @@ function renderText(text){
   x.beginPath();x.moveTo(w-mg-cl,mg);x.lineTo(w-mg,mg);x.lineTo(w-mg,mg+cl);x.stroke();
   x.beginPath();x.moveTo(mg,h-mg-cl);x.lineTo(mg,h-mg);x.lineTo(mg+cl,h-mg);x.stroke();
   x.beginPath();x.moveTo(w-mg-cl,h-mg);x.lineTo(w-mg,h-mg);x.lineTo(w-mg,h-mg-cl);x.stroke();
-
+ 
   if(!text) return;
   $("empty").style.display="none";
-
-  const pad=28, lh=fs*1.55, maxW=w-pad*2;
+ 
+  const pad=28, maxW=w-pad*2;
   const sigHeight=48;
-
-  // Split by newlines first, then parse each line for tags
+ 
   const rawLines=text.split("\n");
-
-  // Build wrapped lines. Each wrapped line = array of segments
-  // A segment = {text, red, bold, italic}
-  const wrappedLines=[]; // each entry: {segs:[...], isEmpty:bool}
-
+  const wrappedLines=[]; // 记录最终要绘制的行和字体大小
+ 
   for(const rawLine of rawLines){
     if(!rawLine.trim()){
-      wrappedLines.push({segs:[], isEmpty:true});
+      wrappedLines.push({segs:[], isEmpty:true, fs:fs, lh:fs*0.5});
       continue;
     }
     const segs=parseRichText(rawLine);
-    // Now word-wrap: iterate char by char across segments, track width
-    let curLineSegs=[]; // segments for current wrapped line
-    let curSeg={text:'', red:false, bold:false, italic:false};
-    let curW=0;
-
-    for(const seg of segs){
-      // Set font to measure this segment's chars
-      const font=makeFont(fs, seg.bold, seg.italic);
-      x.font=font;
-      for(const ch of seg.text){
-        const chW=x.measureText(ch).width;
-        // Check if same style as curSeg
-        const sameStyle=(seg.red===curSeg.red && seg.bold===curSeg.bold && seg.italic===curSeg.italic);
-        if(curW+chW>maxW && (curLineSegs.length>0 || curSeg.text)){
-          // Wrap: push current segment, push line, start new line
-          if(curSeg.text) curLineSegs.push({...curSeg});
-          wrappedLines.push({segs:curLineSegs, isEmpty:false});
-          curLineSegs=[];
-          curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic};
-          curW=chW;
-        }else if(sameStyle){
-          curSeg.text+=ch;
-          curW+=chW;
+    const isBig = segs.some(s => s.big);
+ 
+    if(isBig){
+      // 【核心逻辑】如果包含 <big>，整行自动计算最大字体大小
+      let low=10, high=400, best=fs;
+      while(low<=high){
+        let mid=Math.floor((low+high)/2);
+        let lineW=0;
+        for(const seg of segs){
+          x.font=makeFont(mid, seg.bold, seg.italic);
+          lineW+=x.measureText(seg.text).width;
+        }
+        // 条件：不超出宽度(留边距)，且字高不超过屏幕可用高度的 70%
+        if(lineW<=maxW && mid*1.2 <= h*0.7){
+          best=mid;
+          low=mid+1;
         }else{
-          // Style change within the line
-          if(curSeg.text) curLineSegs.push({...curSeg});
-          curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic};
-          curW+=chW;
+          high=mid-1;
         }
       }
+      // 作为单行推入渲染队列
+      wrappedLines.push({segs, isEmpty:false, fs:best, lh:best*1.3});
+    }else{
+      // 正常文本的自动换行逻辑
+      let curLineSegs=[];
+      let curSeg={text:'', red:false, bold:false, italic:false, big:false};
+      let curW=0;
+      for(const seg of segs){
+        x.font=makeFont(fs, seg.bold, seg.italic);
+        for(const ch of seg.text){
+          const chW=x.measureText(ch).width;
+          const sameStyle=(seg.red===curSeg.red && seg.bold===curSeg.bold && seg.italic===curSeg.italic);
+          if(curW+chW>maxW && (curLineSegs.length>0 || curSeg.text)){
+            if(curSeg.text) curLineSegs.push({...curSeg});
+            wrappedLines.push({segs:curLineSegs, isEmpty:false, fs:fs, lh:fs*1.55});
+            curLineSegs=[];
+            curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+            curW=chW;
+          }else if(sameStyle){
+            curSeg.text+=ch;
+            curW+=chW;
+          }else{
+            if(curSeg.text) curLineSegs.push({...curSeg});
+            curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+            curW+=chW;
+          }
+        }
+      }
+      if(curSeg.text) curLineSegs.push({...curSeg});
+      if(curLineSegs.length) wrappedLines.push({segs:curLineSegs, isEmpty:false, fs:fs, lh:fs*1.55});
     }
-    // Flush remaining
-    if(curSeg.text) curLineSegs.push({...curSeg});
-    if(curLineSegs.length) wrappedLines.push({segs:curLineSegs, isEmpty:false});
   }
-
-  // Calculate total height
+ 
+  // ── 计算总高度并居中绘制 ──
   let totalH=0;
-  for(const ln of wrappedLines) totalH+=ln.isEmpty?lh*0.5:lh;
-
+  for(const ln of wrappedLines) totalH+=ln.lh;
+ 
   const topBound=mg+cw+8;
   const bottomBound=h-mg-sigHeight;
   const availH=bottomBound-topBound;
   let startY=topBound+Math.max(0,(availH-totalH)/2);
-
-  // Draw each line centered
+ 
   let y=startY;
   for(const ln of wrappedLines){
-    if(ln.isEmpty){y+=lh*0.5; continue;}
+    if(ln.isEmpty){y+=ln.lh; continue;}
     if(y>bottomBound) break;
-
-    // Measure total line width for centering
+ 
     let lineW=0;
     for(const seg of ln.segs){
-      x.font=makeFont(fs, seg.bold, seg.italic);
+      x.font=makeFont(ln.fs, seg.bold, seg.italic);
       lineW+=x.measureText(seg.text).width;
     }
-
+ 
     let drawX=w/2-lineW/2;
     for(const seg of ln.segs){
-      x.font=makeFont(fs, seg.bold, seg.italic);
+      x.font=makeFont(ln.fs, seg.bold, seg.italic);
       x.fillStyle=seg.red?'#c0392b':'#000';
       x.textBaseline='top';
       x.fillText(seg.text, drawX, y);
       drawX+=x.measureText(seg.text).width;
     }
-    y+=lh;
+    y+=ln.lh;
   }
-
-  // ── Bottom: "From Claude" centered ──
+ 
+  // ── Bottom: "From Claude" ──
   x.fillStyle="#000";
   x.textAlign="center";
   x.font="700 27px 'Dancing Script',cursive";
   x.fillText("From Claude",w/2,h-mg-18);
   x.textAlign="left";
 }
-
+ 
 function canvasToBW(){
   const c=$("cvs"),w=c.width,h=c.height;
   const d=c.getContext("2d").getImageData(0,0,w,h).data;
@@ -549,7 +552,7 @@ function canvasToBW(){
   
   // 检查界面上是否开启了"三色屏"开关
   const isBWR = $("bwrSw").classList.contains("on");
-
+ 
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
     const i=(y*w+x)*4;
     const r=d[i], g=d[i+1], b=d[i+2];
@@ -562,14 +565,14 @@ function canvasToBW(){
     if(isBWR && r>150 && r>g*1.5 && r>b*1.5){
         isWhite = true;
     }
-
+ 
     if(isWhite){
         bw[y*rb+(x>>3)] |= 0x80>>(x&7);
     }
   }
   return bw;
 }
-
+ 
 function canvasToRed(){
   const c=$("cvs"),w=c.width,h=c.height;
   const d=c.getContext("2d").getImageData(0,0,w,h).data;
@@ -582,12 +585,12 @@ function canvasToRed(){
   }
   return rd;
 }
-
+ 
 function resCvs(){$("cvs").width=+$("dW").value||400;$("cvs").height=+$("dH").value||300}
-
+ 
 // ── Image Processing ──
 let imgCanvas=null;
-
+ 
 function handleImage(input){
   const file=input.files[0];if(!file)return;
   const w=+$("dW").value||400,h=+$("dH").value||300;
@@ -599,7 +602,7 @@ function handleImage(input){
     const sw=img.width*scale,sh=img.height*scale;
     tx.fillStyle="#fff";tx.fillRect(0,0,w,h);
     tx.drawImage(img,(w-sw)/2,(h-sh)/2,sw,sh);
-
+ 
     const id=tx.getImageData(0,0,w,h),px=id.data;
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       const i=(y*w+x)*4;
@@ -615,7 +618,7 @@ function handleImage(input){
       }
     }
     tx.putImageData(id,0,0);
-
+ 
     const dc=$("cvs");dc.width=w;dc.height=h;
     dc.getContext("2d").drawImage(tc,0,0);
     $("empty").style.display="none";
@@ -626,26 +629,26 @@ function handleImage(input){
   };
   img.src=URL.createObjectURL(file);
 }
-
+ 
 const dz=$("dropZone");
 dz.addEventListener("dragover",e=>{e.preventDefault();dz.style.borderColor="var(--blue)"});
 dz.addEventListener("dragleave",()=>dz.style.borderColor="#d5d0c8");
 dz.addEventListener("drop",e=>{e.preventDefault();dz.style.borderColor="#d5d0c8";
   if(e.dataTransfer.files[0]){$("fileIn").files=e.dataTransfer.files;handleImage($("fileIn"))}
 });
-
+ 
 // ── BLE Send ──
 async function sendBW(bw,red){
   if(!chr){log("❌ 未连接","e");toast("请先连接墨水屏");return}
   if(txing){log("⏳ 发送中...","i");return}
   txing=true;$("bleDot").className="dot d-tx";prog(0);
-
+ 
   try{
     await chr.writeValueWithResponse(new Uint8Array([0x01]));
     await new Promise(r=>setTimeout(r,200));
-
+ 
     const cs=mtu-2, total=bw.length+(red?red.length:0);let sent=0;
-
+ 
     for(let i=0;i<bw.length;i+=cs){
       const chunk=bw.slice(i,i+cs);
       const pkt=new Uint8Array(2+chunk.length);
@@ -654,7 +657,7 @@ async function sendBW(bw,red){
       await chr.writeValueWithResponse(pkt);
       sent+=chunk.length;prog(Math.round(sent/total*90));
     }
-
+ 
     if(red){
       for(let i=0;i<red.length;i+=cs){
         const chunk=red.slice(i,i+cs);
@@ -665,7 +668,7 @@ async function sendBW(bw,red){
         sent+=chunk.length;prog(Math.round(sent/total*90));
       }
     }
-
+ 
     prog(95);
     await chr.writeValueWithResponse(new Uint8Array([0x05]));
     prog(100);
@@ -674,22 +677,22 @@ async function sendBW(bw,red){
     $("lastPush").textContent="上次推送: "+new Date().toLocaleTimeString();
     setTimeout(()=>prog(0),2000);
   }catch(e){log("❌ "+e.message,"e");toast("推送失败");prog(0)}
-
+ 
   $("bleDot").className="dot d-on";txing=false;
 }
-
+ 
 function emptyRedLayer(){
   const w=+$("dW").value||400,h=+$("dH").value||300;
   const rd=new Uint8Array(Math.ceil(w/8)*h);rd.fill(0xFF);return rd;
 }
-
+ 
 async function pushText(text){
   renderText(text);
   const bw=canvasToBW();
   const red=$("bwrSw").classList.contains("on")?canvasToRed():emptyRedLayer();
   await sendBW(bw,red);
 }
-
+ 
 async function pushImage(){
   if(!imgCanvas)return;
   const c=$("cvs");c.width=imgCanvas.width;c.height=imgCanvas.height;
@@ -698,13 +701,13 @@ async function pushImage(){
   const red=$("bwrSw").classList.contains("on")?canvasToRed():emptyRedLayer();
   await sendBW(bw,red);
 }
-
+ 
 function preview(){const t=$("txt").value.trim();if(t)renderText(t)}
 async function manualPush(){const t=$("txt").value.trim();if(t)await pushText(t)}
-
+ 
 // ── SSE ──
 let evtSrc=null;
-
+ 
 function toggleSSE(){
   if(evtSrc){evtSrc.close();evtSrc=null;sseUI(0);log("⏹️ 监听已停止");return}
   log("⚡ 连接 SSE...");
@@ -714,7 +717,7 @@ function toggleSSE(){
     try{
       const d=JSON.parse(e.data);
       if(d.text){
-        log(`📨 收到: "${d.text.slice(0,40)}${d.text.length>40?"...":""}"`, "o");
+        log(`📥 收到: "${d.text.slice(0,40)}${d.text.length>40?"...":""}"`, "o");
         toast("收到新内容！");
         $("led").classList.add("active");
         setTimeout(()=>$("led").classList.remove("active"),3000);
@@ -727,14 +730,14 @@ function toggleSSE(){
     if(evtSrc.readyState===2){sseUI(0);log("❌ SSE 断开，尝试重连...","e")}
   };
 }
-
+ 
 function sseUI(on){
   $("sseDot").className="dot "+(on?"d-sse":"d-off");
   $("sseT").textContent=on?"SSE ON":"SSE OFF";
   $("btnSse").textContent=on?"停止监听":"开始监听";
   $("btnSse").className="b "+(on?"b-out":"b-grn");
 }
-
+ 
 // ── History ──
 async function loadH(){
   try{
@@ -744,14 +747,14 @@ async function loadH(){
     $("hList").innerHTML=items.reverse().map(i=>`<div class="hi"><span class="hi-d">${(i.date||"").slice(5)}</span><span>${(i.text||"").slice(0,80)}${i.text?.length>80?"...":""}</span></div>`).join("");
   }catch(e){$("hList").innerHTML='<div style="color:var(--gray)">无法加载</div>'}
 }
-
+ 
 // ── Init ──
 log("✦ 页面已加载","o");
 log("① 连接墨水屏蓝牙","i");
 log("② 开启实时监听","i");
 log("③ 在 Claude 对话中说「发到墨水屏」","i");
-log("📝 支持标签: <r>红色</r> <b>加粗</b> <i>斜体</i>","i");
-
+log("💡 支持标签: <r>红色</r> <b>加粗</b> <i>斜体</i> <big>大字</big>","i");
+ 
 resCvs();loadH();
 </script>
 </body>

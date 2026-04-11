@@ -243,7 +243,6 @@ body{
 
 <div class="wrap">
 
-  <!-- BLE -->
   <div class="c">
     <div class="ch" style="cursor:default">📡 蓝牙连接</div>
     <div class="br">
@@ -254,7 +253,6 @@ body{
     </div>
   </div>
 
-  <!-- SSE -->
   <div class="c">
     <div class="ch" style="cursor:default">⚡ 实时监听</div>
     <div class="br" style="margin-bottom:8px">
@@ -265,7 +263,6 @@ body{
     </div>
   </div>
 
-  <!-- Device Preview -->
   <div class="c">
     <div class="ch" style="cursor:default">🖥️ 屏幕预览</div>
     <div class="device">
@@ -278,7 +275,6 @@ body{
     <div id="lastPush" style="font-size:10px;color:var(--gray);margin-top:8px;text-align:right;font-family:'JetBrains Mono',monospace"></div>
   </div>
 
-  <!-- Manual Input -->
   <div class="c">
     <div class="ch" onclick="tog('manual')">✏️ 手动输入 <span class="arrow" id="manualA">▶</span></div>
     <div class="cb" id="manualB">
@@ -290,7 +286,6 @@ body{
     </div>
   </div>
 
-  <!-- Image Upload -->
   <div class="c">
     <div class="ch" onclick="tog('img')">🖼️ 图片上传 <span class="arrow" id="imgA">▶</span></div>
     <div class="cb" id="imgB">
@@ -306,7 +301,6 @@ body{
     </div>
   </div>
 
-  <!-- Settings -->
   <div class="c">
     <div class="ch" onclick="tog('set')">⚙️ 显示设置 <span class="arrow" id="setA">▶</span></div>
     <div class="cb" id="setB">
@@ -320,7 +314,6 @@ body{
     </div>
   </div>
 
-  <!-- History -->
   <div class="c">
     <div class="ch" onclick="tog('hist')">📜 推送历史 <span class="arrow" id="histA">▶</span></div>
     <div class="cb" id="histB">
@@ -329,7 +322,6 @@ body{
     </div>
   </div>
 
-  <!-- Log -->
   <div class="c">
     <div class="ch" onclick="tog('log')">📋 日志 <span class="arrow open" id="logA">▶</span></div>
     <div class="cb open" id="logB">
@@ -554,9 +546,26 @@ function canvasToBW(){
   const c=$("cvs"),w=c.width,h=c.height;
   const d=c.getContext("2d").getImageData(0,0,w,h).data;
   const rb=Math.ceil(w/8),bw=new Uint8Array(rb*h);
+  
+  // 检查界面上是否开启了"三色屏"开关
+  const isBWR = $("bwrSw").classList.contains("on");
+
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
     const i=(y*w+x)*4;
-    if(d[i]*.299+d[i+1]*.587+d[i+2]*.114>=128)bw[y*rb+(x>>3)]|=0x80>>(x&7);
+    const r=d[i], g=d[i+1], b=d[i+2];
+    
+    // 计算灰度，判断原本是否应为白色
+    let isWhite = (r*.299 + g*.587 + b*.114) >= 128;
+    
+    // 【核心修复】如果开启了三色模式，并且识别出是红色像素，
+    // 黑白层必须强制留白（设为 1），否则黑色会把红色盖住
+    if(isBWR && r>150 && r>g*1.5 && r>b*1.5){
+        isWhite = true;
+    }
+
+    if(isWhite){
+        bw[y*rb+(x>>3)] |= 0x80>>(x&7);
+    }
   }
   return bw;
 }

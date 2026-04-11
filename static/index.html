@@ -422,7 +422,7 @@ function makeFont(size, bold, italic){
 }
  
 // ══════════════════════════════════════════════════════
-// ── Canvas Render (新增自动缩放排版算法) ──
+// ── Canvas Render (重构了单词自动换行算法) ──
 // ══════════════════════════════════════════════════════
 function renderText(text){
   const w=+$("dW").value||400, h=+$("dH").value||300, fs=+$("fz").value||28;
@@ -445,7 +445,7 @@ function renderText(text){
   const sigHeight=48;
  
   const rawLines=text.split("\n");
-  const wrappedLines=[]; // 记录最终要绘制的行和字体大小
+  const wrappedLines=[]; 
  
   for(const rawLine of rawLines){
     if(!rawLine.trim()){
@@ -465,7 +465,6 @@ function renderText(text){
           x.font=makeFont(mid, seg.bold, seg.italic);
           lineW+=x.measureText(seg.text).width;
         }
-        // 条件：不超出宽度(留边距)，且字高不超过屏幕可用高度的 70%
         if(lineW<=maxW && mid*1.2 <= h*0.7){
           best=mid;
           low=mid+1;
@@ -473,31 +472,68 @@ function renderText(text){
           high=mid-1;
         }
       }
-      // 作为单行推入渲染队列
       wrappedLines.push({segs, isEmpty:false, fs:best, lh:best*1.3});
     }else{
-      // 正常文本的自动换行逻辑
+      // 正常文本的自动换行逻辑：按照单词/空格/中文块进行切分
       let curLineSegs=[];
       let curSeg={text:'', red:false, bold:false, italic:false, big:false};
       let curW=0;
+      
       for(const seg of segs){
         x.font=makeFont(fs, seg.bold, seg.italic);
-        for(const ch of seg.text){
-          const chW=x.measureText(ch).width;
+        // 将文本按非空格序列（英文单词等）、空格、中文字符及标点等拆分为 token
+        const tokens = seg.text.match(/[^ \u4e00-\u9fa5\u3000-\u303f\uff00-\uffef]+|[ ]|[\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef]|./g) || [];
+        
+        for(const token of tokens){
+          const tokenW=x.measureText(token).width;
           const sameStyle=(seg.red===curSeg.red && seg.bold===curSeg.bold && seg.italic===curSeg.italic);
-          if(curW+chW>maxW && (curLineSegs.length>0 || curSeg.text)){
-            if(curSeg.text) curLineSegs.push({...curSeg});
-            wrappedLines.push({segs:curLineSegs, isEmpty:false, fs:fs, lh:fs*1.55});
-            curLineSegs=[];
-            curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
-            curW=chW;
+          
+          if(curW+tokenW>maxW && (curLineSegs.length>0 || curSeg.text)){
+            // 如果遇到空格刚好超宽，直接换行并丢掉该空格
+            if(token===' '){
+              if(curSeg.text) curLineSegs.push({...curSeg});
+              wrappedLines.push({segs:curLineSegs, isEmpty:false, fs:fs, lh:fs*1.55});
+              curLineSegs=[];
+              curSeg={text:'', red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+              curW=0;
+              continue;
+            }
+            
+            // 遇到超大单词退化为原有的按字符切分兜底（例如超长 URL）
+            if(curW===0 || tokenW>maxW){
+              for(const ch of token){
+                const chW=x.measureText(ch).width;
+                if(curW+chW>maxW){
+                  if(curSeg.text) curLineSegs.push({...curSeg});
+                  wrappedLines.push({segs:curLineSegs, isEmpty:false, fs:fs, lh:fs*1.55});
+                  curLineSegs=[];
+                  curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+                  curW=chW;
+                }else{
+                  if(seg.red===curSeg.red && seg.bold===curSeg.bold && seg.italic===curSeg.italic){
+                    curSeg.text+=ch;
+                  }else{
+                    if(curSeg.text) curLineSegs.push({...curSeg});
+                    curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+                  }
+                  curW+=chW;
+                }
+              }
+            } else {
+              // 正常的单词换行：上一行打断推送，当前单词放到下一行
+              if(curSeg.text) curLineSegs.push({...curSeg});
+              wrappedLines.push({segs:curLineSegs, isEmpty:false, fs:fs, lh:fs*1.55});
+              curLineSegs=[];
+              curSeg={text:token, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+              curW=tokenW;
+            }
           }else if(sameStyle){
-            curSeg.text+=ch;
-            curW+=chW;
+            curSeg.text+=token;
+            curW+=tokenW;
           }else{
             if(curSeg.text) curLineSegs.push({...curSeg});
-            curSeg={text:ch, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
-            curW+=chW;
+            curSeg={text:token, red:seg.red, bold:seg.bold, italic:seg.italic, big:false};
+            curW+=tokenW;
           }
         }
       }
@@ -550,18 +586,14 @@ function canvasToBW(){
   const d=c.getContext("2d").getImageData(0,0,w,h).data;
   const rb=Math.ceil(w/8),bw=new Uint8Array(rb*h);
   
-  // 检查界面上是否开启了"三色屏"开关
   const isBWR = $("bwrSw").classList.contains("on");
  
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
     const i=(y*w+x)*4;
     const r=d[i], g=d[i+1], b=d[i+2];
     
-    // 计算灰度，判断原本是否应为白色
     let isWhite = (r*.299 + g*.587 + b*.114) >= 128;
     
-    // 【核心修复】如果开启了三色模式，并且识别出是红色像素，
-    // 黑白层必须强制留白（设为 1），否则黑色会把红色盖住
     if(isBWR && r>150 && r>g*1.5 && r>b*1.5){
         isWhite = true;
     }

@@ -168,8 +168,7 @@ def manifest():
 MCP_TOOLS = [
     {
         "name": "push_to_eink",
-        "description": "推送文字内容到用户的电子墨水屏。屏幕分辨率400x300，支持【黑、白、红】三色显示。重要：当你想要强调某些文字时，请务必使用 XML 标签来格式化：红色文字用 <r>包裹</r>，加粗用 <b>包裹</b>，斜体用 <i>包裹</i>，且支持嵌套（如 <b><r>重要警告</r></b>）。内容控制在100字以内，避免使用复杂的emoji。Push text to user's e-ink screen. IMPORTANT: Support red text using <r>tags</r>, bold using <b>tags</b>, and italic using <i>tags</i>.",
-        "inputSchema": {
+       "description": "推送文字内容到用户的电子墨水屏。屏幕分辨率400x300，支持【黑、白、红】三色显示。重要：当你想要强调某些文字时，请务必使用 XML 标签来格式化：红色文字用 <r>包裹</r>，加粗用 <b>包裹</b>，斜体用 <i>包裹</i>，巨型排版用 <big>包裹</big>（用于单独放大的单词或短语，会自动铺满屏幕），且支持嵌套（如 <big><b><r>重点</r></b></big>）。内容控制在100字以内，避免复杂的emoji。",
             "type": "object",
             "properties": {
                 "text": {
